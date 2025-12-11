@@ -47,13 +47,16 @@
         .logo { font-size: 1.5rem; font-weight: bold; }
         .logo span { color: #aaa; font-weight: normal; font-size: 0.9em; }
         
-        #rol-badge {
-            background: rgba(255,255,255,0.2);
-            padding: 5px 10px;
-            border-radius: 15px;
-            font-size: 0.8rem;
+        #user-info-display {
+            background: rgba(255,255,255,0.1);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
             margin-left: 10px;
-            border: 1px solid rgba(255,255,255,0.4);
+            border: 1px solid rgba(255,255,255,0.3);
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         nav ul { display: flex; gap: 20px; align-items: center; }
@@ -151,6 +154,15 @@
             background: #fafafa;
         }
         
+        /* Campo de solo lectura (Remitente) */
+        .input-readonly {
+            background-color: #e9ecef !important;
+            color: #495057;
+            font-weight: bold;
+            border-color: #ced4da;
+            cursor: not-allowed;
+        }
+
         .full-width { grid-column: 1 / -1; }
 
         .btn-submit {
@@ -179,15 +191,11 @@
 
         .acciones-container { display: flex; gap: 5px; align-items: center; }
 
-        /* Botones Acción */
         .btn-icon { padding: 6px 10px; border-radius: 4px; cursor: pointer; border: 1px solid transparent; font-size: 0.9rem; transition: 0.2s;}
-        
         .btn-advance { background: #eef2f7; color: var(--primary-color); border-color: #ccdbe8; }
         .btn-advance:hover { background: #dfe7f0; }
-
         .btn-edit { background: #fffbf0; color: #b78900; border-color: #ffeeba; }
         .btn-edit:hover { background: #fff3cd; }
-
         .btn-delete { background: #fff5f5; color: var(--danger-color); border-color: #ffc9c9; }
         .btn-delete:hover { background: #ffe3e3; }
 
@@ -219,14 +227,29 @@
         }
         .close-btn { position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer; }
 
-        /* --- LOGIN MODAL --- */
+        /* --- LOGIN MODAL (MEJORADO) --- */
         #loginModal { display: flex; background: #003366; }
         .login-box { background: white; padding: 40px; border-radius: 10px; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-        .login-btn { display: block; width: 100%; padding: 15px; margin: 10px 0; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem; transition: 0.3s; }
-        .btn-admin { background: #003366; color: white; }
+        
+        .login-input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 1rem;
+        }
+
+        .login-btn { display: block; width: 100%; padding: 15px; margin: 10px 0; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem; transition: 0.3s; font-weight: bold; }
+        .btn-admin { background: #003366; color: white; margin-top: 20px; }
         .btn-admin:hover { background: #002244; }
-        .btn-user { background: #f4f6f9; color: #333; border: 1px solid #ddd; }
-        .btn-user:hover { background: #e2e6ea; }
+        .btn-user { background: #28a745; color: white; }
+        .btn-user:hover { background: #218838; }
+
+        .divider { border-top: 1px solid #eee; margin: 20px 0; position: relative; }
+        .divider span { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: white; padding: 0 10px; color: #888; font-size: 0.8rem; }
+
 
         /* --- MODAL EDITAR --- */
         .modal-form { text-align: left; margin-top: 15px; }
@@ -259,16 +282,24 @@
     <div id="loginModal" class="modal-overlay">
         <div class="login-box">
             <h2 style="color:#003366; margin-top:0;">Bienvenido</h2>
-            <p>Selecciona tu perfil para ingresar al sistema de Logística Interna.</p>
-            <br>
-            <button class="login-btn btn-admin" onclick="intentarLogin('ADMIN')">🔑 Ingresar como Administrador</button>
-            <button class="login-btn btn-user" onclick="intentarLogin('USER')">👤 Ingresar como Usuario (Solicitante)</button>
+            
+            <div style="text-align: left;">
+                <label style="font-weight:bold; color:#555;">Tu Nombre y Apellido:</label>
+                <input type="text" id="nombreUsuarioInput" class="login-input" placeholder="Ej: Juan Perez">
+                <button class="login-btn btn-user" onclick="intentarLogin('USER')">👤 Ingresar como Solicitante</button>
+            </div>
+
+            <div class="divider"><span>O ingresa como</span></div>
+
+            <button class="login-btn btn-admin" onclick="intentarLogin('ADMIN')">🔑 Administrador</button>
         </div>
     </div>
 
     <header>
         <div class="container">
-            <div class="logo">LOGÍSTICA <span>INTERNA</span> <span id="rol-badge"></span></div>
+            <div class="logo">LOGÍSTICA <span>INTERNA</span></div>
+            <div id="user-info-display"></div> 
+
             <nav>
                 <ul>
                     <li><a href="#panel-control">Panel de Control</a></li>
@@ -311,8 +342,7 @@
                         <tr>
                             <th>ID</th>
                             <th>NV / Cliente</th>
-                            <th>Destino / Receptor</th>
-                            <th>Contenido</th>
+                            <th>Origen / Remitente</th> <th>Destino / Receptor</th>
                             <th>Estado</th>
                             <th>Acciones</th>
                         </tr>
@@ -336,10 +366,12 @@
                     <label>Nombre del Cliente</label>
                     <input type="text" id="cliente" placeholder="Nombre completo o Empresa" required>
                 </div>
+                
                 <div class="form-group">
-                    <label>Remitente</label>
-                    <input type="text" id="remitente" placeholder="Tu Nombre / Área" required>
+                    <label>Remitente (Tú)</label>
+                    <input type="text" id="remitente" class="input-readonly" readonly required>
                 </div>
+
                 <div class="form-group">
                     <label>Destino</label>
                     <select id="destino" required>
@@ -347,11 +379,12 @@
                         <option value="Valparaiso">Valparaiso</option>
                         <option value="Iquique">Iquique</option>
                         <option value="Concepcion">Concepcion</option>
+                        <option value="Santiago">Santiago</option>
                     </select>
                 </div>
                 <div class="form-group full-width">
                     <label>Destinatario Final</label>
-                    <input type="text" id="destinatario" placeholder="¿Quién recibe?" required>
+                    <input type="text" id="destinatario" placeholder="¿Quién recibe en sucursal?" required>
                 </div>
                 <div class="form-group full-width">
                     <label>Descripción</label>
@@ -410,7 +443,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-        // CONFIGURACIÓN FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyDROTpcUbs1QALzaD9WM9tseixhcTgurkY",
             authDomain: "logistica-interna-7d3f9.firebaseapp.com",
@@ -425,29 +457,50 @@
 
         window.BASE_DATOS = []; 
         window.ROL_ACTUAL = null;
-        let urlVerificada = false; // Para evitar que se abra el modal infinitas veces
+        window.USUARIO_ACTUAL = ""; // Aquí guardaremos el nombre de quien entra
+        let urlVerificada = false; 
 
-        // --- SISTEMA DE LOGIN ---
+        // --- SISTEMA DE LOGIN MEJORADO ---
         window.intentarLogin = function(rol) {
             if(rol === 'ADMIN') {
                 const pass = prompt("Ingrese contraseña de Administrador:");
-                if(pass === 'admin123') { // CLAVE DEMO
+                if(pass === 'admin123') { 
                     window.ROL_ACTUAL = 'ADMIN';
-                    document.getElementById('rol-badge').textContent = 'MODO: ADMINISTRADOR';
-                    document.getElementById('loginModal').style.display = 'none';
-                    renderizarTabla();
+                    window.USUARIO_ACTUAL = 'Administrador';
+                    configurarSesion();
                 } else {
                     alert("Contraseña incorrecta");
                 }
             } else {
+                // Login de Usuario Normal
+                const nombreIngresado = document.getElementById('nombreUsuarioInput').value.trim();
+                
+                if(nombreIngresado.length < 3) {
+                    alert("Por favor, ingresa tu nombre completo para continuar.");
+                    return;
+                }
+
                 window.ROL_ACTUAL = 'USER';
-                document.getElementById('rol-badge').textContent = 'MODO: USUARIO';
-                document.getElementById('loginModal').style.display = 'none';
-                renderizarTabla();
+                window.USUARIO_ACTUAL = nombreIngresado.toUpperCase(); // Guardar en Mayúsculas
+                configurarSesion();
             }
         };
 
-        // LEER DATOS (READ)
+        function configurarSesion() {
+            // Ocultar modal login
+            document.getElementById('loginModal').style.display = 'none';
+            
+            // Mostrar info en header
+            const badgeIcon = window.ROL_ACTUAL === 'ADMIN' ? '🔑' : '👤';
+            document.getElementById('user-info-display').innerHTML = `${badgeIcon} <strong>${window.USUARIO_ACTUAL}</strong>`;
+            
+            // Auto-rellenar formulario de envío con el nombre del usuario
+            document.getElementById('remitente').value = window.USUARIO_ACTUAL;
+            
+            renderizarTabla();
+        }
+
+        // LEER DATOS
         const q = query(collection(db, "despachos"), orderBy("fecha_creacion", "desc"));
         onSnapshot(q, (snapshot) => {
             window.BASE_DATOS = []; 
@@ -459,28 +512,21 @@
                 renderizarTabla();
             }
 
-            // --- AUTO RASTREO POR URL (NUEVO) ---
-            // Si la URL tiene ?track=INT-XXXX, abrir modal automáticamente
+            // Auto rastreo por URL
             if (!urlVerificada) {
                 const params = new URLSearchParams(window.location.search);
                 const trackId = params.get('track');
                 if (trackId) {
-                    // Esperamos un segundo breve para asegurar que los datos cargaron
                     setTimeout(() => {
                         const envio = window.BASE_DATOS.find(item => item.id === trackId);
-                        if (envio) {
-                            mostrarModalRastreo(envio);
-                        } else {
-                            // Si se escaneó pero no se encuentra, avisar
-                            if(window.BASE_DATOS.length > 0) alert("El pedido escaneado no existe o fue eliminado.");
-                        }
+                        if (envio) mostrarModalRastreo(envio);
                     }, 500); 
-                    urlVerificada = true; // Marcar como verificado para no repetir
+                    urlVerificada = true;
                 }
             }
         });
 
-        // GUARDAR DATOS (CREATE)
+        // GUARDAR DATOS
         const formulario = document.getElementById('envioForm');
         formulario.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -494,7 +540,7 @@
                     id: nuevoID,
                     nv: document.getElementById('nv').value,
                     cliente: document.getElementById('cliente').value,
-                    origen: document.getElementById('remitente').value,
+                    origen: window.USUARIO_ACTUAL, // USAMOS LA VARIABLE GLOBAL
                     destino: document.getElementById('destino').value,
                     destinatario: document.getElementById('destinatario').value,
                     contenido: document.getElementById('descripcion').value,
@@ -502,9 +548,7 @@
                     fecha_creacion: new Date()
                 });
 
-                // --- GENERACIÓN DE QR FUNCIONAL (CAMBIO IMPORTANTE) ---
-                // Generamos una URL que apunta a ESTA MISMA página, pero con el parámetro ?track=ID
-                const baseUrl = window.location.href.split('?')[0]; // Limpia parámetros anteriores
+                const baseUrl = window.location.href.split('?')[0]; 
                 const trackingLink = `${baseUrl}?track=${nuevoID}`;
                 const qrData = encodeURIComponent(trackingLink);
                 const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${qrData}`;
@@ -515,9 +559,8 @@
                         <img src="${qrUrl}" alt="QR" style="width:120px; height:120px;">
                         <div>
                             <h1 style="margin:0; font-size:1.8rem;">${nuevoID}</h1>
-                            <p style="margin:0; font-weight:bold;">${document.getElementById('cliente').value}</p>
+                            <p style="margin:0;"><strong>Remitente:</strong> ${window.USUARIO_ACTUAL}</p>
                             <p style="margin:0; font-size:0.9rem;">Destino: ${document.getElementById('destino').value}</p>
-                            <small style="color:#888;">Escanea para ver estado</small>
                         </div>
                     </div>
                     <div style="display:flex; gap:10px; justify-content:center;">
@@ -525,7 +568,11 @@
                         <button onclick="cerrarModal()" class="btn-submit" style="padding:10px 20px;">Aceptar</button>
                     </div>
                 `);
+                
+                // Resetear form pero MANTENER el usuario actual
                 formulario.reset();
+                document.getElementById('remitente').value = window.USUARIO_ACTUAL;
+
             } catch (error) { alert("Error al guardar: " + error.message); } 
             finally { btn.disabled = false; btn.textContent = "Generar Envío y Etiqueta"; }
         });
@@ -551,15 +598,16 @@
                     let btnDelete = `<button class="btn-icon btn-delete" onclick="eliminarDespacho('${item.id}')" title="Eliminar">🗑️</button>`;
                     accionesHtml = `<div class="acciones-container">${btnAdvance} ${btnEdit} ${btnDelete}</div>`;
                 } else {
-                    accionesHtml = `<span style="color:#aaa; font-size:0.8rem;">👁️ Solo Lectura</span>`;
+                    accionesHtml = `<span style="color:#aaa; font-size:0.8rem;">Solo Lectura</span>`;
                 }
 
+                // Usamos item.origen como "Remitente"
                 const fila = `
                     <tr>
                         <td><strong>${item.id}</strong></td>
                         <td><span style="font-weight:bold; color:#003366">NV: ${item.nv || '-'}</span><br><small>${item.cliente || '-'}</small></td>
+                        <td>${item.origen || 'Anónimo'}</td> 
                         <td>${item.destino}<br><small style="color:#777">${item.destinatario}</small></td>
-                        <td>${item.contenido}</td>
                         <td><span class="badge ${badgeClass}">${item.estado}</span></td>
                         <td>${accionesHtml}</td>
                     </tr>
@@ -568,7 +616,7 @@
             });
         };
 
-        // --- FUNCIONES DE EDICIÓN (ADMIN) ---
+        // --- FUNCIONES ADMIN ---
         window.abrirModalEditar = function(id_interno) {
             if (window.ROL_ACTUAL !== 'ADMIN') return;
             const item = window.BASE_DATOS.find(i => i.id === id_interno);
@@ -585,7 +633,6 @@
         window.guardarEdicion = async function() {
             if (window.ROL_ACTUAL !== 'ADMIN') return;
             const fs_id = document.getElementById('edit_firestore_id').value;
-            // Recolectar datos...
             try {
                 const docRef = doc(db, "despachos", fs_id);
                 await updateDoc(docRef, {
@@ -617,14 +664,13 @@
             catch (e) { console.error(e); }
         };
 
-        // --- FUNCIONES RASTREO Y VISUALIZACIÓN ---
-        
+        // --- RASTREO ---
         window.mostrarModalRastreo = function(envio) {
             let color = envio.estado === 'En Ruta' ? '#ff9800' : (envio.estado === 'Entregado' ? '#28a745' : '#007bff');
             mostrarModal(`
                 <h3>📦 Estado: <span style="color:${color}">${envio.estado}</span></h3>
                 <div style="text-align:left; padding:10px;">
-                    <p><strong>ID:</strong> ${envio.id}</p>
+                    <p><strong>Remitente:</strong> ${envio.origen || '-'}</p>
                     <p><strong>NV:</strong> ${envio.nv || '-'}</p>
                     <p><strong>Cliente:</strong> ${envio.cliente || '-'}</p>
                     <hr>
@@ -638,11 +684,8 @@
         window.rastrearInterno = function() {
             const codigo = document.getElementById('trackingInput').value.trim().toUpperCase();
             const envio = window.BASE_DATOS.find(item => item.id === codigo);
-            if (envio) {
-                mostrarModalRastreo(envio);
-            } else { 
-                mostrarModal("<h3>❌ No encontrado</h3><button onclick='cerrarModal()' class='btn-submit'>Cerrar</button>"); 
-            }
+            if (envio) mostrarModalRastreo(envio);
+            else mostrarModal("<h3>❌ No encontrado</h3><button onclick='cerrarModal()' class='btn-submit'>Cerrar</button>"); 
         };
 
         window.filtrarPorEstado = function(estado) { renderizarTabla(estado); };
