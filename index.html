@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logística Interna | Control de Despachos</title>
+    <style>
+        /* --- ESTILOS GENERALES --- */
+        :root {
+            --primary-color: #003366;
+            --bg-color: #f4f6f9;
+            --accent-color: #28a745;
+            --text-color: #333;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            line-height: 1.6;
+        }
+
+        a { text-decoration: none; color: inherit; }
+        ul { list-style: none; padding: 0; margin: 0; }
+
+        /* --- HEADER --- */
+        header {
+            background: var(--primary-color);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo { font-size: 1.5rem; font-weight: bold; }
+        .logo span { color: #aaa; font-weight: normal; font-size: 0.9em; }
+        
+        #rol-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            margin-left: 10px;
+            border: 1px solid rgba(255,255,255,0.4);
+        }
+
+        nav ul { display: flex; gap: 20px; align-items: center; }
+        nav a:hover { opacity: 0.8; }
+
+        /* --- HERO --- */
+        .hero {
+            background: linear-gradient(rgba(0,51,102,0.9), rgba(0,51,102,0.8)), url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+            background-size: cover;
+            background-position: center;
+            height: 300px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            color: white;
+        }
+
+        .hero h1 { font-size: 2.2rem; margin: 0 0 10px 0; }
+        
+        .tracking-box {
+            background: white;
+            padding: 8px;
+            border-radius: 50px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            display: flex;
+            width: 90%;
+            max-width: 600px;
+            margin-top: 15px;
+        }
+
+        .tracking-box input {
+            flex: 1;
+            padding: 15px 20px;
+            border: none;
+            outline: none;
+            font-size: 1rem;
+            border-radius: 50px 0 0 50px;
+        }
+
+        .tracking-box button {
+            background: var(--accent-color);
+            color: white;
+            padding: 0 30px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: 0.3s;
+        }
+        .tracking-box button:hover { background: #218838; }
+
+        /* --- SECCIONES --- */
+        .main-section {
+            max-width: 1000px;
+            margin: -40px auto 40px auto;
+            position: relative;
+            z-index: 10;
+            padding: 0 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            color: var(--primary-color);
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-top: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* --- FORMULARIO --- */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; color: #555; }
+        .form-group input, .form-group select { 
+            padding: 10px; 
+            border: 1px solid #ddd; 
+            border-radius: 5px; 
+            background: #fafafa;
+        }
+        
+        .full-width { grid-column: 1 / -1; }
+
+        .btn-submit {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .btn-submit:hover { background: #002244; }
+        .btn-submit:disabled { background: #ccc; cursor: not-allowed; }
+
+        /* --- TABLA Y BOTONES --- */
+        .table-container { overflow-x: auto; margin-top: 15px; }
+        table { width: 100%; border-collapse: collapse; min-width: 700px; }
+        th { background: #f1f1f1; text-align: left; padding: 12px; border-bottom: 2px solid #ddd; color: #555; }
+        td { padding: 12px; border-bottom: 1px solid #eee; vertical-align: middle; }
+        
+        .badge { padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; color: white; font-weight: bold; }
+        .bg-blue { background-color: #007bff; }
+        .bg-orange { background-color: #ff9800; }
+        .bg-green { background-color: #28a745; }
+
+        .acciones-container { display: flex; gap: 5px; align-items: center; }
+
+        /* Botones Acción */
+        .btn-icon { padding: 6px 10px; border-radius: 4px; cursor: pointer; border: 1px solid transparent; font-size: 0.9rem; transition: 0.2s;}
+        
+        .btn-advance { background: #eef2f7; color: var(--primary-color); border-color: #ccdbe8; }
+        .btn-advance:hover { background: #dfe7f0; }
+
+        .btn-edit { background: #fffbf0; color: #b78900; border-color: #ffeeba; }
+        .btn-edit:hover { background: #fff3cd; }
+
+        .btn-delete { background: #fff5f5; color: var(--danger-color); border-color: #ffc9c9; }
+        .btn-delete:hover { background: #ffe3e3; }
+
+
+        /* --- FILTROS --- */
+        .filters { display: flex; gap: 10px; flex-wrap: wrap; }
+        .filters button { padding: 8px 15px; border: none; border-radius: 20px; cursor: pointer; color: white; font-size: 0.9rem; }
+
+        /* --- MODAL GENERAL --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+            position: relative;
+        }
+        .close-btn { position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer; }
+
+        /* --- LOGIN MODAL --- */
+        #loginModal { display: flex; background: #003366; }
+        .login-box { background: white; padding: 40px; border-radius: 10px; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .login-btn { display: block; width: 100%; padding: 15px; margin: 10px 0; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem; transition: 0.3s; }
+        .btn-admin { background: #003366; color: white; }
+        .btn-admin:hover { background: #002244; }
+        .btn-user { background: #f4f6f9; color: #333; border: 1px solid #ddd; }
+        .btn-user:hover { background: #e2e6ea; }
+
+        /* --- MODAL EDITAR --- */
+        .modal-form { text-align: left; margin-top: 15px; }
+        .modal-form label { font-weight: bold; font-size: 0.9rem; margin-top: 10px; display: block; color: #555; }
+        .modal-form input, .modal-form select { width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .modal-actions { margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end; }
+        .btn-cancel { background: #ccc; color: #333; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+        .btn-save { background: var(--primary-color); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+
+
+        /* --- FOOTER --- */
+        footer { background: #222; color: #888; text-align: center; padding: 20px 0; margin-top: auto; }
+
+        @media print {
+            body * { visibility: hidden; }
+            #resultadoModal, #resultadoModal * { visibility: visible; }
+            #resultadoModal { position: absolute; left: 0; top: 0; width: 100%; height: 100%; background: white; }
+            .modal-content { box-shadow: none; border: 2px solid #000; width: 100%; max-width: 100%; }
+            .btn-submit, .close-btn { display: none !important; }
+        }
+
+        @media (max-width: 768px) {
+            .form-grid { grid-template-columns: 1fr; }
+            nav ul { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loginModal" class="modal-overlay">
+        <div class="login-box">
+            <h2 style="color:#003366; margin-top:0;">Bienvenido</h2>
+            <p>Selecciona tu perfil para ingresar al sistema de Logística Interna.</p>
+            <br>
+            <button class="login-btn btn-admin" onclick="intentarLogin('ADMIN')">🔑 Ingresar como Administrador</button>
+            <button class="login-btn btn-user" onclick="intentarLogin('USER')">👤 Ingresar como Usuario (Solicitante)</button>
+        </div>
+    </div>
+
+    <header>
+        <div class="container">
+            <div class="logo">LOGÍSTICA <span>INTERNA</span> <span id="rol-badge"></span></div>
+            <nav>
+                <ul>
+                    <li><a href="#panel-control">Panel de Control</a></li>
+                    <li><a href="#registrar">Nuevo Envío</a></li>
+                    <li><a href="#" onclick="location.reload()">Salir</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="container">
+            <h1>Rastreo de Paquetes</h1>
+            <p>Sistema de control interno de valijas y encomiendas.</p>
+            <div class="tracking-box">
+                <input type="text" id="trackingInput" placeholder="Escanea o escribe ID (Ej: INT-5042)">
+                <button onclick="rastrearInterno()">Buscar</button>
+            </div>
+        </div>
+    </section>
+
+    <div class="main-section">
+        
+        <section id="panel-control" class="card">
+            <div class="section-title">
+                <h2 style="margin:0">📊 Panel de Control</h2>
+                <button onclick="exportarExcel()" style="background:#17a2b8; color:white; border:none; padding:8px 15px; border-radius:5px; cursor:pointer;">📥 Descargar Excel</button>
+            </div>
+            
+            <div class="filters">
+                <button onclick="renderizarTabla()" style="background:#555;">Todos</button>
+                <button onclick="filtrarPorEstado('Ingresado')" style="background:#007bff;">Ingresados</button>
+                <button onclick="filtrarPorEstado('En Ruta')" style="background:#ff9800;">En Ruta</button>
+                <button onclick="filtrarPorEstado('Entregado')" style="background:#28a745;">Entregados</button>
+            </div>
+
+            <div class="table-container">
+                <table id="tabla-envios">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>NV / Cliente</th>
+                            <th>Destino / Receptor</th>
+                            <th>Contenido</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-cuerpo">
+                        <tr><td colspan="6" style="text-align:center; padding:20px;">Cargando datos...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="registrar" class="card">
+            <h2 class="section-title" style="display:block;">📝 Registrar Nuevo Despacho</h2>
+            
+            <form id="envioForm" class="form-grid">
+                <div class="form-group">
+                    <label>N° Nota de Venta (NV)</label>
+                    <input type="text" id="nv" placeholder="Ej: 540021" required>
+                </div>
+                <div class="form-group">
+                    <label>Nombre del Cliente</label>
+                    <input type="text" id="cliente" placeholder="Nombre completo o Empresa" required>
+                </div>
+                <div class="form-group">
+                    <label>Remitente</label>
+                    <input type="text" id="remitente" placeholder="Tu Nombre / Área" required>
+                </div>
+                <div class="form-group">
+                    <label>Destino</label>
+                    <select id="destino" required>
+                        <option value="">Seleccione Sucursal...</option>
+                        <option value="Valparaiso">Valparaiso</option>
+                        <option value="Iquique">Iquique</option>
+                        <option value="Concepcion">Concepcion</option>
+                    </select>
+                </div>
+                <div class="form-group full-width">
+                    <label>Destinatario Final</label>
+                    <input type="text" id="destinatario" placeholder="¿Quién recibe?" required>
+                </div>
+                <div class="form-group full-width">
+                    <label>Descripción</label>
+                    <input type="text" id="descripcion" placeholder="Ej: Documentos, Muestras..." required>
+                </div>
+                <button type="submit" id="btn-registrar" class="btn-submit full-width">Generar Envío y Etiqueta</button>
+            </form>
+        </section>
+
+    </div>
+
+    <footer>
+        <p>Sistema Interno de Logística - Depto Operaciones &copy; 2025</p>
+    </footer>
+
+    <div id="resultadoModal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="close-btn" onclick="cerrarModal()">&times;</span>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <div id="editarModal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="close-btn" onclick="cerrarModalEditar()">&times;</span>
+            <h3 style="margin-top:0; color:var(--primary-color);">✏️ Editar Despacho</h3>
+            
+            <div class="modal-form">
+                <input type="hidden" id="edit_firestore_id">
+                
+                <label>Estado del Envío:</label>
+                <select id="edit_estado">
+                    <option value="Ingresado">Ingresado</option>
+                    <option value="En Ruta">En Ruta</option>
+                    <option value="Entregado">Entregado</option>
+                </select>
+
+                <label>N° Nota de Venta (NV):</label>
+                <input type="text" id="edit_nv">
+
+                <label>Cliente:</label>
+                <input type="text" id="edit_cliente">
+
+                <label>Destinatario (Recibe):</label>
+                <input type="text" id="edit_destinatario">
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="cerrarModalEditar()">Cancelar</button>
+                    <button type="button" class="btn-save" onclick="guardarEdicion()">Guardar Cambios</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+        // CONFIGURACIÓN FIREBASE
+        const firebaseConfig = {
+            apiKey: "AIzaSyDROTpcUbs1QALzaD9WM9tseixhcTgurkY",
+            authDomain: "logistica-interna-7d3f9.firebaseapp.com",
+            projectId: "logistica-interna-7d3f9",
+            storageBucket: "logistica-interna-7d3f9.firebasestorage.app",
+            messagingSenderId: "901492480528",
+            appId: "1:901492480528:web:574b16ef89c40be7a50895"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.BASE_DATOS = []; 
+        window.ROL_ACTUAL = null;
+        let urlVerificada = false; // Para evitar que se abra el modal infinitas veces
+
+        // --- SISTEMA DE LOGIN ---
+        window.intentarLogin = function(rol) {
+            if(rol === 'ADMIN') {
+                const pass = prompt("Ingrese contraseña de Administrador:");
+                if(pass === 'admin123') { // CLAVE DEMO
+                    window.ROL_ACTUAL = 'ADMIN';
+                    document.getElementById('rol-badge').textContent = 'MODO: ADMINISTRADOR';
+                    document.getElementById('loginModal').style.display = 'none';
+                    renderizarTabla();
+                } else {
+                    alert("Contraseña incorrecta");
+                }
+            } else {
+                window.ROL_ACTUAL = 'USER';
+                document.getElementById('rol-badge').textContent = 'MODO: USUARIO';
+                document.getElementById('loginModal').style.display = 'none';
+                renderizarTabla();
+            }
+        };
+
+        // LEER DATOS (READ)
+        const q = query(collection(db, "despachos"), orderBy("fecha_creacion", "desc"));
+        onSnapshot(q, (snapshot) => {
+            window.BASE_DATOS = []; 
+            snapshot.forEach((doc) => {
+                window.BASE_DATOS.push({ firestore_id: doc.id, ...doc.data() });
+            });
+
+            if(window.ROL_ACTUAL) {
+                renderizarTabla();
+            }
+
+            // --- AUTO RASTREO POR URL (NUEVO) ---
+            // Si la URL tiene ?track=INT-XXXX, abrir modal automáticamente
+            if (!urlVerificada) {
+                const params = new URLSearchParams(window.location.search);
+                const trackId = params.get('track');
+                if (trackId) {
+                    // Esperamos un segundo breve para asegurar que los datos cargaron
+                    setTimeout(() => {
+                        const envio = window.BASE_DATOS.find(item => item.id === trackId);
+                        if (envio) {
+                            mostrarModalRastreo(envio);
+                        } else {
+                            // Si se escaneó pero no se encuentra, avisar
+                            if(window.BASE_DATOS.length > 0) alert("El pedido escaneado no existe o fue eliminado.");
+                        }
+                    }, 500); 
+                    urlVerificada = true; // Marcar como verificado para no repetir
+                }
+            }
+        });
+
+        // GUARDAR DATOS (CREATE)
+        const formulario = document.getElementById('envioForm');
+        formulario.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-registrar');
+            btn.disabled = true; btn.textContent = "Guardando...";
+
+            const nuevoID = 'INT-' + Math.floor(Math.random() * 9000 + 1000);
+
+            try {
+                await addDoc(collection(db, "despachos"), {
+                    id: nuevoID,
+                    nv: document.getElementById('nv').value,
+                    cliente: document.getElementById('cliente').value,
+                    origen: document.getElementById('remitente').value,
+                    destino: document.getElementById('destino').value,
+                    destinatario: document.getElementById('destinatario').value,
+                    contenido: document.getElementById('descripcion').value,
+                    estado: 'Ingresado',
+                    fecha_creacion: new Date()
+                });
+
+                // --- GENERACIÓN DE QR FUNCIONAL (CAMBIO IMPORTANTE) ---
+                // Generamos una URL que apunta a ESTA MISMA página, pero con el parámetro ?track=ID
+                const baseUrl = window.location.href.split('?')[0]; // Limpia parámetros anteriores
+                const trackingLink = `${baseUrl}?track=${nuevoID}`;
+                const qrData = encodeURIComponent(trackingLink);
+                const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${qrData}`;
+
+                mostrarModal(`
+                    <h3 style="color:#003366; margin-top:0;">✅ Envío Registrado</h3>
+                    <div style="border:2px dashed #003366; background:#fff; padding:15px; margin:15px 0; display:flex; gap:15px; text-align:left; align-items:center;">
+                        <img src="${qrUrl}" alt="QR" style="width:120px; height:120px;">
+                        <div>
+                            <h1 style="margin:0; font-size:1.8rem;">${nuevoID}</h1>
+                            <p style="margin:0; font-weight:bold;">${document.getElementById('cliente').value}</p>
+                            <p style="margin:0; font-size:0.9rem;">Destino: ${document.getElementById('destino').value}</p>
+                            <small style="color:#888;">Escanea para ver estado</small>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:10px; justify-content:center;">
+                        <button onclick="window.print()" class="btn-submit" style="padding:10px 20px; background:#555;">🖨 Imprimir</button>
+                        <button onclick="cerrarModal()" class="btn-submit" style="padding:10px 20px;">Aceptar</button>
+                    </div>
+                `);
+                formulario.reset();
+            } catch (error) { alert("Error al guardar: " + error.message); } 
+            finally { btn.disabled = false; btn.textContent = "Generar Envío y Etiqueta"; }
+        });
+
+        // RENDERIZAR TABLA
+        window.renderizarTabla = function(filtro = null) {
+            const cuerpo = document.getElementById('tabla-cuerpo');
+            cuerpo.innerHTML = "";
+            const datos = filtro ? window.BASE_DATOS.filter(i => i.estado === filtro) : window.BASE_DATOS;
+
+            if(datos.length === 0) {
+                cuerpo.innerHTML = "<tr><td colspan='6' style='text-align:center; padding:20px;'>No hay datos</td></tr>";
+                return;
+            }
+
+            datos.forEach(item => {
+                let badgeClass = item.estado === 'En Ruta' ? 'bg-orange' : (item.estado === 'Entregado' ? 'bg-green' : 'bg-blue');
+                let accionesHtml = '';
+
+                if (window.ROL_ACTUAL === 'ADMIN') {
+                    let btnAdvance = item.estado === 'Entregado' ? '' : `<button class="btn-icon btn-advance" onclick="avanzarEstado('${item.id}')" title="Avanzar Etapa">📍</button>`;
+                    let btnEdit = `<button class="btn-icon btn-edit" onclick="abrirModalEditar('${item.id}')" title="Editar / Modificar Estado">✏️</button>`;
+                    let btnDelete = `<button class="btn-icon btn-delete" onclick="eliminarDespacho('${item.id}')" title="Eliminar">🗑️</button>`;
+                    accionesHtml = `<div class="acciones-container">${btnAdvance} ${btnEdit} ${btnDelete}</div>`;
+                } else {
+                    accionesHtml = `<span style="color:#aaa; font-size:0.8rem;">👁️ Solo Lectura</span>`;
+                }
+
+                const fila = `
+                    <tr>
+                        <td><strong>${item.id}</strong></td>
+                        <td><span style="font-weight:bold; color:#003366">NV: ${item.nv || '-'}</span><br><small>${item.cliente || '-'}</small></td>
+                        <td>${item.destino}<br><small style="color:#777">${item.destinatario}</small></td>
+                        <td>${item.contenido}</td>
+                        <td><span class="badge ${badgeClass}">${item.estado}</span></td>
+                        <td>${accionesHtml}</td>
+                    </tr>
+                `;
+                cuerpo.innerHTML += fila;
+            });
+        };
+
+        // --- FUNCIONES DE EDICIÓN (ADMIN) ---
+        window.abrirModalEditar = function(id_interno) {
+            if (window.ROL_ACTUAL !== 'ADMIN') return;
+            const item = window.BASE_DATOS.find(i => i.id === id_interno);
+            if(item) {
+                document.getElementById('edit_firestore_id').value = item.firestore_id;
+                document.getElementById('edit_estado').value = item.estado;
+                document.getElementById('edit_nv').value = item.nv || '';
+                document.getElementById('edit_cliente').value = item.cliente || '';
+                document.getElementById('edit_destinatario').value = item.destinatario || '';
+                document.getElementById('editarModal').style.display = 'flex';
+            }
+        };
+
+        window.guardarEdicion = async function() {
+            if (window.ROL_ACTUAL !== 'ADMIN') return;
+            const fs_id = document.getElementById('edit_firestore_id').value;
+            // Recolectar datos...
+            try {
+                const docRef = doc(db, "despachos", fs_id);
+                await updateDoc(docRef, {
+                    estado: document.getElementById('edit_estado').value,
+                    nv: document.getElementById('edit_nv').value,
+                    cliente: document.getElementById('edit_cliente').value,
+                    destinatario: document.getElementById('edit_destinatario').value
+                });
+                cerrarModalEditar();
+            } catch (e) { alert("Error al editar: " + e.message); }
+        };
+
+        window.cerrarModalEditar = function() { document.getElementById('editarModal').style.display = 'none'; };
+
+        window.eliminarDespacho = async function(id_interno) {
+            if (window.ROL_ACTUAL !== 'ADMIN') return;
+            const item = window.BASE_DATOS.find(i => i.id === id_interno);
+            if(item && confirm(`¿Estás seguro de ELIMINAR el despacho ${id_interno}?`)) {
+                try { await deleteDoc(doc(db, "despachos", item.firestore_id)); } 
+                catch (e) { alert("Error al eliminar: " + e.message); }
+            }
+        };
+
+        window.avanzarEstado = async function(id_interno) {
+            if (window.ROL_ACTUAL !== 'ADMIN') return;
+            const item = window.BASE_DATOS.find(i => i.id === id_interno);
+            let nuevo = item.estado === 'Ingresado' ? 'En Ruta' : 'Entregado';
+            try { await updateDoc(doc(db, "despachos", item.firestore_id), { estado: nuevo }); } 
+            catch (e) { console.error(e); }
+        };
+
+        // --- FUNCIONES RASTREO Y VISUALIZACIÓN ---
+        
+        window.mostrarModalRastreo = function(envio) {
+            let color = envio.estado === 'En Ruta' ? '#ff9800' : (envio.estado === 'Entregado' ? '#28a745' : '#007bff');
+            mostrarModal(`
+                <h3>📦 Estado: <span style="color:${color}">${envio.estado}</span></h3>
+                <div style="text-align:left; padding:10px;">
+                    <p><strong>ID:</strong> ${envio.id}</p>
+                    <p><strong>NV:</strong> ${envio.nv || '-'}</p>
+                    <p><strong>Cliente:</strong> ${envio.cliente || '-'}</p>
+                    <hr>
+                    <p><strong>Destino:</strong> ${envio.destino}</p>
+                    <p><strong>Recibe:</strong> ${envio.destinatario}</p>
+                </div>
+                <button onclick="cerrarModal()" class="btn-submit" style="width:100%;">Cerrar</button>
+            `);
+        };
+
+        window.rastrearInterno = function() {
+            const codigo = document.getElementById('trackingInput').value.trim().toUpperCase();
+            const envio = window.BASE_DATOS.find(item => item.id === codigo);
+            if (envio) {
+                mostrarModalRastreo(envio);
+            } else { 
+                mostrarModal("<h3>❌ No encontrado</h3><button onclick='cerrarModal()' class='btn-submit'>Cerrar</button>"); 
+            }
+        };
+
+        window.filtrarPorEstado = function(estado) { renderizarTabla(estado); };
+        window.exportarExcel = function() { 
+            let tabla = document.getElementById("tabla-envios").cloneNode(true);
+            tabla.querySelectorAll('tr').forEach(tr => { if(tr.children.length>5) tr.removeChild(tr.lastElementChild); });
+            let enlace = document.createElement("a");
+            enlace.href = 'data:application/vnd.ms-excel,' + encodeURIComponent(tabla.outerHTML);
+            enlace.download = `Reporte_${new Date().toISOString().slice(0,10)}.xls`;
+            enlace.click();
+        };
+
+        window.mostrarModal = function(html) { document.getElementById('modalBody').innerHTML = html; document.getElementById('resultadoModal').style.display = 'flex'; };
+        window.cerrarModal = function() { document.getElementById('resultadoModal').style.display = 'none'; };
+        window.onclick = function(e) { 
+            if(e.target.className === 'modal-overlay' && e.target.id !== 'loginModal') { 
+                e.target.style.display = 'none'; 
+            } 
+        };
+
+    </script>
+</body>
+</html>
