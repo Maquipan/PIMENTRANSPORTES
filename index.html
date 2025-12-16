@@ -154,7 +154,6 @@
             background: #fafafa;
         }
         
-        /* Campo de solo lectura (Remitente) */
         .input-readonly {
             background-color: #e9ecef !important;
             color: #495057;
@@ -199,8 +198,6 @@
         .btn-delete { background: #fff5f5; color: var(--danger-color); border-color: #ffc9c9; }
         .btn-delete:hover { background: #ffe3e3; }
 
-
-        /* --- FILTROS --- */
         .filters { display: flex; gap: 10px; flex-wrap: wrap; }
         .filters button { padding: 8px 15px; border: none; border-radius: 20px; cursor: pointer; color: white; font-size: 0.9rem; }
 
@@ -227,7 +224,7 @@
         }
         .close-btn { position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer; }
 
-        /* --- LOGIN MODAL (MEJORADO) --- */
+        /* --- LOGIN MODAL --- */
         #loginModal { display: flex; background: #003366; }
         .login-box { background: white; padding: 40px; border-radius: 10px; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         
@@ -250,7 +247,6 @@
         .divider { border-top: 1px solid #eee; margin: 20px 0; position: relative; }
         .divider span { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: white; padding: 0 10px; color: #888; font-size: 0.8rem; }
 
-
         /* --- MODAL EDITAR --- */
         .modal-form { text-align: left; margin-top: 15px; }
         .modal-form label { font-weight: bold; font-size: 0.9rem; margin-top: 10px; display: block; color: #555; }
@@ -258,7 +254,6 @@
         .modal-actions { margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end; }
         .btn-cancel { background: #ccc; color: #333; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
         .btn-save { background: var(--primary-color); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
-
 
         /* --- FOOTER --- */
         footer { background: #222; color: #888; text-align: center; padding: 20px 0; margin-top: auto; }
@@ -315,7 +310,7 @@
             <h1>Rastreo de Paquetes</h1>
             <p>Sistema de control interno de valijas y encomiendas.</p>
             <div class="tracking-box">
-                <input type="text" id="trackingInput" placeholder="Escanea o escribe ID (Ej: INT-5042)">
+                <input type="text" id="trackingInput" placeholder="Escanea ID o escribe NV (Ej: 540021)...">
                 <button onclick="rastrearInterno()">Buscar</button>
             </div>
         </div>
@@ -342,7 +337,8 @@
                         <tr>
                             <th>ID</th>
                             <th>NV / Cliente</th>
-                            <th>Origen / Remitente</th> <th>Destino / Receptor</th>
+                            <th>Origen / Remitente</th>
+                            <th>Destino / Receptor</th>
                             <th>Estado</th>
                             <th>Acciones</th>
                         </tr>
@@ -457,7 +453,7 @@
 
         window.BASE_DATOS = []; 
         window.ROL_ACTUAL = null;
-        window.USUARIO_ACTUAL = ""; // Aquí guardaremos el nombre de quien entra
+        window.USUARIO_ACTUAL = "";
         let urlVerificada = false; 
 
         // --- SISTEMA DE LOGIN MEJORADO ---
@@ -472,31 +468,22 @@
                     alert("Contraseña incorrecta");
                 }
             } else {
-                // Login de Usuario Normal
                 const nombreIngresado = document.getElementById('nombreUsuarioInput').value.trim();
-                
                 if(nombreIngresado.length < 3) {
                     alert("Por favor, ingresa tu nombre completo para continuar.");
                     return;
                 }
-
                 window.ROL_ACTUAL = 'USER';
-                window.USUARIO_ACTUAL = nombreIngresado.toUpperCase(); // Guardar en Mayúsculas
+                window.USUARIO_ACTUAL = nombreIngresado.toUpperCase(); 
                 configurarSesion();
             }
         };
 
         function configurarSesion() {
-            // Ocultar modal login
             document.getElementById('loginModal').style.display = 'none';
-            
-            // Mostrar info en header
             const badgeIcon = window.ROL_ACTUAL === 'ADMIN' ? '🔑' : '👤';
             document.getElementById('user-info-display').innerHTML = `${badgeIcon} <strong>${window.USUARIO_ACTUAL}</strong>`;
-            
-            // Auto-rellenar formulario de envío con el nombre del usuario
             document.getElementById('remitente').value = window.USUARIO_ACTUAL;
-            
             renderizarTabla();
         }
 
@@ -512,7 +499,6 @@
                 renderizarTabla();
             }
 
-            // Auto rastreo por URL
             if (!urlVerificada) {
                 const params = new URLSearchParams(window.location.search);
                 const trackId = params.get('track');
@@ -540,7 +526,7 @@
                     id: nuevoID,
                     nv: document.getElementById('nv').value,
                     cliente: document.getElementById('cliente').value,
-                    origen: window.USUARIO_ACTUAL, // USAMOS LA VARIABLE GLOBAL
+                    origen: window.USUARIO_ACTUAL,
                     destino: document.getElementById('destino').value,
                     destinatario: document.getElementById('destinatario').value,
                     contenido: document.getElementById('descripcion').value,
@@ -569,7 +555,6 @@
                     </div>
                 `);
                 
-                // Resetear form pero MANTENER el usuario actual
                 formulario.reset();
                 document.getElementById('remitente').value = window.USUARIO_ACTUAL;
 
@@ -601,7 +586,6 @@
                     accionesHtml = `<span style="color:#aaa; font-size:0.8rem;">Solo Lectura</span>`;
                 }
 
-                // Usamos item.origen como "Remitente"
                 const fila = `
                     <tr>
                         <td><strong>${item.id}</strong></td>
@@ -664,7 +648,7 @@
             catch (e) { console.error(e); }
         };
 
-        // --- RASTREO ---
+        // --- RASTREO MEJORADO (BUSCAR POR NV O ID) ---
         window.mostrarModalRastreo = function(envio) {
             let color = envio.estado === 'En Ruta' ? '#ff9800' : (envio.estado === 'Entregado' ? '#28a745' : '#007bff');
             mostrarModal(`
@@ -681,11 +665,21 @@
             `);
         };
 
+        // --- FUNCIÓN DE BÚSQUEDA MODIFICADA ---
         window.rastrearInterno = function() {
-            const codigo = document.getElementById('trackingInput').value.trim().toUpperCase();
-            const envio = window.BASE_DATOS.find(item => item.id === codigo);
-            if (envio) mostrarModalRastreo(envio);
-            else mostrarModal("<h3>❌ No encontrado</h3><button onclick='cerrarModal()' class='btn-submit'>Cerrar</button>"); 
+            const busqueda = document.getElementById('trackingInput').value.trim().toUpperCase();
+            
+            // Busca si la entrada coincide con el ID O con la NV
+            const envio = window.BASE_DATOS.find(item => 
+                item.id === busqueda || 
+                (item.nv && item.nv.toString().trim().toUpperCase() === busqueda)
+            );
+
+            if (envio) {
+                mostrarModalRastreo(envio);
+            } else { 
+                mostrarModal("<h3>❌ No encontrado</h3><p>No encontramos ningún envío con ese ID o NV.</p><button onclick='cerrarModal()' class='btn-submit'>Cerrar</button>"); 
+            }
         };
 
         window.filtrarPorEstado = function(estado) { renderizarTabla(estado); };
