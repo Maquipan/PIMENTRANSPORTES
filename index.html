@@ -13,6 +13,7 @@
             --text-color: #333;
             --danger-color: #dc3545;
             --warning-color: #ffc107;
+            --purple-color: #6f42c1; /* Color para Instalado */
         }
 
         body {
@@ -187,6 +188,7 @@
         .bg-blue { background-color: #007bff; }
         .bg-orange { background-color: #ff9800; }
         .bg-green { background-color: #28a745; }
+        .bg-purple { background-color: var(--purple-color); } /* NUEVO COLOR */
 
         .acciones-container { display: flex; gap: 5px; align-items: center; }
 
@@ -280,8 +282,8 @@
             
             <div style="text-align: left;">
                 <label style="font-weight:bold; color:#555;">Tu Nombre y Apellido:</label>
-                <input type="text" id="nombreUsuarioInput" class="login-input" placeholder="Ej: Juan Perez">
-                <button class="login-btn btn-user" onclick="intentarLogin('USER')">👤 Ingresar como Solicitante</button>
+                <input type="text" id="nombreUsuarioInput" class="login-input" placeholder="Ej: Juan Perez (o Planificación)">
+                <button class="login-btn btn-user" onclick="intentarLogin('USER')">👤 Ingresar</button>
             </div>
 
             <div class="divider"><span>O ingresa como</span></div>
@@ -329,6 +331,7 @@
                 <button onclick="filtrarPorEstado('Ingresado')" style="background:#007bff;">Ingresados</button>
                 <button onclick="filtrarPorEstado('En Ruta')" style="background:#ff9800;">En Ruta</button>
                 <button onclick="filtrarPorEstado('Entregado')" style="background:#28a745;">Entregados</button>
+                <button onclick="filtrarPorEstado('Instalado')" style="background:#6f42c1;">Instalados</button>
             </div>
 
             <div class="table-container">
@@ -416,6 +419,7 @@
                     <option value="Ingresado">Ingresado</option>
                     <option value="En Ruta">En Ruta</option>
                     <option value="Entregado">Entregado</option>
+                    <option value="Instalado">Instalado</option>
                 </select>
 
                 <label>N° Nota de Venta (NV):</label>
@@ -456,7 +460,7 @@
         window.USUARIO_ACTUAL = "";
         let urlVerificada = false; 
 
-        // --- SISTEMA DE LOGIN MEJORADO ---
+        // --- SISTEMA DE LOGIN ACTUALIZADO ---
         window.intentarLogin = function(rol) {
             if(rol === 'ADMIN') {
                 const pass = prompt("Ingrese contraseña de Administrador:");
@@ -473,15 +477,31 @@
                     alert("Por favor, ingresa tu nombre completo para continuar.");
                     return;
                 }
-                window.ROL_ACTUAL = 'USER';
-                window.USUARIO_ACTUAL = nombreIngresado.toUpperCase(); 
+                
+                // --- LOGICA PLANIFICACIÓN ---
+                // Si el nombre es Planificacion (sin importar mayus/minus), se asigna rol especial
+                if (quitarAcentos(nombreIngresado.toLowerCase()) === 'planificacion') {
+                    window.ROL_ACTUAL = 'PLANIF';
+                    window.USUARIO_ACTUAL = 'Planificación';
+                } else {
+                    window.ROL_ACTUAL = 'USER';
+                    window.USUARIO_ACTUAL = nombreIngresado.toUpperCase(); 
+                }
                 configurarSesion();
             }
         };
 
+        function quitarAcentos(str) {
+            return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        }
+
         function configurarSesion() {
             document.getElementById('loginModal').style.display = 'none';
-            const badgeIcon = window.ROL_ACTUAL === 'ADMIN' ? '🔑' : '👤';
+            
+            let badgeIcon = '👤';
+            if(window.ROL_ACTUAL === 'ADMIN') badgeIcon = '🔑';
+            if(window.ROL_ACTUAL === 'PLANIF') badgeIcon = '🛠️';
+
             document.getElementById('user-info-display').innerHTML = `${badgeIcon} <strong>${window.USUARIO_ACTUAL}</strong>`;
             document.getElementById('remitente').value = window.USUARIO_ACTUAL;
             renderizarTabla();
@@ -562,7 +582,7 @@
             finally { btn.disabled = false; btn.textContent = "Generar Envío y Etiqueta"; }
         });
 
-        // RENDERIZAR TABLA
+        // RENDERIZAR TABLA CON NUEVAS LÓGICAS
         window.renderizarTabla = function(filtro = null) {
             const cuerpo = document.getElementById('tabla-cuerpo');
             cuerpo.innerHTML = "";
@@ -574,14 +594,28 @@
             }
 
             datos.forEach(item => {
-                let badgeClass = item.estado === 'En Ruta' ? 'bg-orange' : (item.estado === 'Entregado' ? 'bg-green' : 'bg-blue');
+                // Colores para etiquetas
+                let badgeClass = 'bg-blue';
+                if(item.estado === 'En Ruta') badgeClass = 'bg-orange';
+                if(item.estado === 'Entregado') badgeClass = 'bg-green';
+                if(item.estado === 'Instalado') badgeClass = 'bg-purple';
+
                 let accionesHtml = '';
 
+                // --- LÓGICA DE BOTONES ---
                 if (window.ROL_ACTUAL === 'ADMIN') {
-                    let btnAdvance = item.estado === 'Entregado' ? '' : `<button class="btn-icon btn-advance" onclick="avanzarEstado('${item.id}')" title="Avanzar Etapa">📍</button>`;
-                    let btnEdit = `<button class="btn-icon btn-edit" onclick="abrirModalEditar('${item.id}')" title="Editar / Modificar Estado">✏️</button>`;
+                    let btnAdvance = (item.estado === 'Entregado' || item.estado === 'Instalado') ? '' : `<button class="btn-icon btn-advance" onclick="avanzarEstado('${item.id}')" title="Avanzar Etapa">📍</button>`;
+                    let btnEdit = `<button class="btn-icon btn-edit" onclick="abrirModalEditar('${item.id}')" title="Editar">✏️</button>`;
                     let btnDelete = `<button class="btn-icon btn-delete" onclick="eliminarDespacho('${item.id}')" title="Eliminar">🗑️</button>`;
                     accionesHtml = `<div class="acciones-container">${btnAdvance} ${btnEdit} ${btnDelete}</div>`;
+                
+                } else if (window.ROL_ACTUAL === 'PLANIF') {
+                    // Planificación solo puede tocar lo que está Entregado o Instalado
+                    if (item.estado === 'Entregado' || item.estado === 'Instalado') {
+                        accionesHtml = `<button class="btn-icon btn-edit" onclick="abrirModalEditar('${item.id}')" title="Modificar Instalación">✏️ Modificar</button>`;
+                    } else {
+                        accionesHtml = `<span style="color:#aaa; font-size:0.8rem;">En Proceso...</span>`;
+                    }
                 } else {
                     accionesHtml = `<span style="color:#aaa; font-size:0.8rem;">Solo Lectura</span>`;
                 }
@@ -600,11 +634,14 @@
             });
         };
 
-        // --- FUNCIONES ADMIN ---
+        // --- FUNCIONES EDICIÓN Y ESTADOS ---
         window.abrirModalEditar = function(id_interno) {
-            if (window.ROL_ACTUAL !== 'ADMIN') return;
+            // Permitir ADMIN o PLANIF
+            if (window.ROL_ACTUAL !== 'ADMIN' && window.ROL_ACTUAL !== 'PLANIF') return;
+            
             const item = window.BASE_DATOS.find(i => i.id === id_interno);
             if(item) {
+                // Si es Planificación, restringir o advertir (opcional), aquí dejamos que usen el modal
                 document.getElementById('edit_firestore_id').value = item.firestore_id;
                 document.getElementById('edit_estado').value = item.estado;
                 document.getElementById('edit_nv').value = item.nv || '';
@@ -615,10 +652,12 @@
         };
 
         window.guardarEdicion = async function() {
-            if (window.ROL_ACTUAL !== 'ADMIN') return;
+             if (window.ROL_ACTUAL !== 'ADMIN' && window.ROL_ACTUAL !== 'PLANIF') return;
+            
             const fs_id = document.getElementById('edit_firestore_id').value;
             try {
                 const docRef = doc(db, "despachos", fs_id);
+                // Planificacion usará esto para cambiar de Entregado <-> Instalado
                 await updateDoc(docRef, {
                     estado: document.getElementById('edit_estado').value,
                     nv: document.getElementById('edit_nv').value,
@@ -632,7 +671,7 @@
         window.cerrarModalEditar = function() { document.getElementById('editarModal').style.display = 'none'; };
 
         window.eliminarDespacho = async function(id_interno) {
-            if (window.ROL_ACTUAL !== 'ADMIN') return;
+            if (window.ROL_ACTUAL !== 'ADMIN') return; // Solo ADMIN elimina
             const item = window.BASE_DATOS.find(i => i.id === id_interno);
             if(item && confirm(`¿Estás seguro de ELIMINAR el despacho ${id_interno}?`)) {
                 try { await deleteDoc(doc(db, "despachos", item.firestore_id)); } 
@@ -643,14 +682,24 @@
         window.avanzarEstado = async function(id_interno) {
             if (window.ROL_ACTUAL !== 'ADMIN') return;
             const item = window.BASE_DATOS.find(i => i.id === id_interno);
-            let nuevo = item.estado === 'Ingresado' ? 'En Ruta' : 'Entregado';
+            
+            let nuevo = item.estado;
+            if (item.estado === 'Ingresado') nuevo = 'En Ruta';
+            else if (item.estado === 'En Ruta') nuevo = 'Entregado';
+            // El admin también podría avanzar a Instalado si quisiera
+            // else if (item.estado === 'Entregado') nuevo = 'Instalado'; 
+            
             try { await updateDoc(doc(db, "despachos", item.firestore_id), { estado: nuevo }); } 
             catch (e) { console.error(e); }
         };
 
-        // --- RASTREO MEJORADO (BUSCAR POR NV O ID) ---
+        // --- RASTREO (BUSCAR POR NV O ID) ---
         window.mostrarModalRastreo = function(envio) {
-            let color = envio.estado === 'En Ruta' ? '#ff9800' : (envio.estado === 'Entregado' ? '#28a745' : '#007bff');
+            let color = '#007bff';
+            if(envio.estado === 'En Ruta') color = '#ff9800';
+            if(envio.estado === 'Entregado') color = '#28a745';
+            if(envio.estado === 'Instalado') color = '#6f42c1';
+
             mostrarModal(`
                 <h3>📦 Estado: <span style="color:${color}">${envio.estado}</span></h3>
                 <div style="text-align:left; padding:10px;">
@@ -665,11 +714,9 @@
             `);
         };
 
-        // --- FUNCIÓN DE BÚSQUEDA MODIFICADA ---
         window.rastrearInterno = function() {
             const busqueda = document.getElementById('trackingInput').value.trim().toUpperCase();
             
-            // Busca si la entrada coincide con el ID O con la NV
             const envio = window.BASE_DATOS.find(item => 
                 item.id === busqueda || 
                 (item.nv && item.nv.toString().trim().toUpperCase() === busqueda)
